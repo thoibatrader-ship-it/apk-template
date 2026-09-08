@@ -90,6 +90,14 @@ jobs:
             app/build/outputs/bundle/release/app-release.aab \
             "${{ secrets.KEY_ALIAS }}"
 
+      - name: Audit final APK permissions (catches anything a plugin silently injected via manifest merge)
+        working-directory: android
+        run: |
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)
+          echo "::group::Permissions actually present in the signed APK"
+          "${BUILD_TOOLS}aapt" dump permissions app/build/outputs/apk/release/app-release-signed.apk
+          echo "::endgroup::"
+
       - name: Clean up decoded keystore
         if: always()
         working-directory: android
