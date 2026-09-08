@@ -56,6 +56,10 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
+      - name: Build unsigned release AAB (for Google Play, ~10-15s extra since it reuses assembleRelease's compiled output)
+        working-directory: android
+        run: ./gradlew bundleRelease
+
       - name: Decode keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
@@ -74,6 +78,18 @@ jobs:
             --out app/build/outputs/apk/release/app-release-signed.apk \
             app/build/outputs/apk/release/app-release-aligned.apk
 
+      - name: Sign AAB (jarsigner \u2014 apksigner doesn't support .aab, same keystore/alias as the APK)
+        working-directory: android
+        run: |
+          jarsigner -verbose \
+            -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore app/release.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            -signedjar app/build/outputs/bundle/release/app-release-signed.aab \
+            app/build/outputs/bundle/release/app-release.aab \
+            "${{ secrets.KEY_ALIAS }}"
+
       - name: Clean up decoded keystore
         if: always()
         working-directory: android
@@ -83,3 +99,8 @@ jobs:
         with:
           name: signed-apk
           path: android/app/build/outputs/apk/release/app-release-signed.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-aab
+          path: android/app/build/outputs/bundle/release/app-release-signed.aab
