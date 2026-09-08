@@ -37,14 +37,21 @@
 
     <!-- Permissions -->
 
+    <!-- Always kept: normal-protection permission, no runtime prompt, never
+         flagged by store review. Removing it risks silently breaking apps
+         that quietly load an external font/CDN/API. Not wrapped in a
+         PERM marker on purpose \u2014 the dashboard never trims this. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- PERM:CAMERA:START -->
     <!-- Camera -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <!-- PERM:CAMERA:END -->
 
+    <!-- PERM:STORAGE:START -->
     <!-- Storage / Gallery (legacy, Android 12 and below) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
@@ -53,25 +60,37 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- PERM:STORAGE:END -->
 
+    <!-- PERM:LOCATION:START -->
     <!-- GPS / Location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- PERM:LOCATION:END -->
 
+    <!-- PERM:MIC:START -->
     <!-- Microphone -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- PERM:MIC:END -->
 
+    <!-- PERM:NOTIFICATIONS:START -->
     <!-- Notifications (Android 13+ requires runtime prompt) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- PERM:NOTIFICATIONS:END -->
 
+    <!-- PERM:VIBRATE:START -->
     <!-- Vibrate (no runtime prompt needed, included for haptics plugin) -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- PERM:VIBRATE:END -->
 
     <!--
-      Optional / less-common permissions — commented out by default to keep the
+      Optional / less-common permissions \u2014 commented out by default to keep the
       permission surface minimal (fewer runtime prompts = fewer places for a
       per-user app to break). Uncomment per-app in the generated repo if the
-      user's HTML/JS actually needs them.
+      user's HTML/JS actually needs them. NOT wired to auto-detection: these
+      plugins (@capacitor-community/contacts, bluetooth-le, calendar) aren't
+      installed in package.json by default, so turning the permission on
+      alone wouldn't make the feature work \u2014 needs manual setup either way.
 
       <uses-permission android:name="android.permission.READ_CONTACTS" />
       <uses-permission android:name="android.permission.WRITE_CONTACTS" />
