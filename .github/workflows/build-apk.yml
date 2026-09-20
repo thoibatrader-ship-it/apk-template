@@ -7,6 +7,49 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # ---- BlackUI build permit ------------------------------------------------------------
+      # First step on purpose: no permit (or a fake/expired one) = stop here, before any CI time is spent.
+      # The permit is created by the BlackUI server and stored as the BUILD_PERMIT secret by the dashboard.
+      - name: Verify build permit with BlackUI server
+        env:
+          BUILD_PERMIT: ${{ secrets.BUILD_PERMIT }}
+          # >>> SET THIS ONCE to your worker URL (same site as API_BASE in index.html) <<<
+          VERIFY_URL: https://blackui123490not4.pages.dev/api/apk/verify
+        run: |
+          if [[ "$VERIFY_URL" == *YOUR-PROJECT* ]]; then
+            echo "::error::Template is not configured: set VERIFY_URL in .github/workflows/build-apk.yml to your BlackUI server URL."
+            exit 1
+          fi
+          if [ -z "$BUILD_PERMIT" ]; then
+            echo "::error::No build permit found. Please start the build from the BlackUI dashboard (it creates the permit for you)."
+            exit 1
+          fi
+          # A permit only contains letters, digits, '.', '_' and '-'. Anything else is not a real permit.
+          if [[ ! "$BUILD_PERMIT" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "::error::The build permit is malformed. Please start the build again from the BlackUI dashboard."
+            exit 1
+          fi
+          status=000
+          for attempt in 1 2 3 4; do
+            status=$(curl -sS -o verify.json -w '%{http_code}' --max-time 20 \
+              -X POST -H 'Content-Type: application/json' \
+              --data "{\"permit\":\"$BUILD_PERMIT\"}" "$VERIFY_URL" || true)
+            case "$status" in
+              200|401|403|404) break ;;  # definitive answer from the server: do not retry
+              *) echo "Permit check attempt $attempt failed (HTTP $status)."; [ "$attempt" -lt 4 ] && sleep $((attempt * 4)) ;;
+            esac
+          done
+          if [ "$status" = "200" ] && grep -q '"valid":true' verify.json; then
+            echo "Build permit verified."
+          elif [ "$status" = "401" ]; then
+            echo "::error::The build permit is invalid or has expired. Please start the build again from the BlackUI dashboard."
+            exit 1
+          else
+            echo "::error::Could not verify the build permit (HTTP $status). Please try again in a few minutes."
+            exit 1
+          fi
+          rm -f verify.json
+
       - uses: actions/checkout@v4
 
       - name: Check required secrets are set
