@@ -81,6 +81,9 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@v3
+        with:
+          # Google removed the old 'tools' SDK package; the action's default ('tools platform-tools') now fails.
+          packages: platform-tools
 
       - run: npm install
 
@@ -121,7 +124,7 @@ jobs:
             --out app/build/outputs/apk/release/app-release-signed.apk \
             app/build/outputs/apk/release/app-release-aligned.apk
 
-      - name: Sign AAB (jarsigner \u2014 apksigner doesn't support .aab, same keystore/alias as the APK)
+      - name: Sign AAB (jarsigner - apksigner doesn't support .aab, same keystore/alias as the APK)
         working-directory: android
         run: |
           jarsigner -verbose \
