@@ -14,7 +14,7 @@ jobs:
         env:
           BUILD_PERMIT: ${{ secrets.BUILD_PERMIT }}
           # >>> SET THIS ONCE to your worker URL (same site as API_BASE in index.html) <<<
-          VERIFY_URL: https://blackui123490not4.pages.dev/api/apk/verify
+          VERIFY_URL: https://blackui.thoibatrader.com/api/apk/verify
         run: |
           if [[ "$VERIFY_URL" == *YOUR-PROJECT* ]]; then
             echo "::error::Template is not configured: set VERIFY_URL in .github/workflows/build-apk.yml to your BlackUI server URL."
